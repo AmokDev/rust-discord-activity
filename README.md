@@ -57,7 +57,7 @@ And voilà! This sets-up a new Activity for the current Discord user:
 <img alt="Discord Rich Presence" src="https://imgur.com/gf9pOen.png" width="300"/>
 
 ## Limitations
-For the moment, the library only works with MacOS and local Discord application.
+For the moment, the library only works with WINDOWS (sukkk UNIXoids :)))) ) and local Discord application.
 
 ## Next Steps
 - Write proper documentation for this library
