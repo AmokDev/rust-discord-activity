@@ -1,10 +1,9 @@
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use log::debug;
 use serde_json::{json, Value};
-use std::env::var;
 use std::error::Error;
 use std::io::{Read, Write};
-use std::os::unix::net::UnixStream;
+use named_pipe::PipeClient;
 use std::path::PathBuf;
 
 use crate::models::client::{commands::Commands, payload::OpCode, payload::Payload};
@@ -20,7 +19,7 @@ pub struct DiscordClient {
     pub is_connected: bool,
 
     /// Unix Stream socket of Client Connection.
-    socket: Option<UnixStream>,
+    socket: Option<PipeClient>,
 }
 
 impl DiscordClient {
@@ -37,7 +36,7 @@ impl DiscordClient {
     pub fn connect(&mut self) -> Result<(), ErrorMsg> {
         let path = self.fetch_process_pathbuf().join("discord-ipc-0");
 
-        match UnixStream::connect(&path) {
+        match PipeClient::connect(&path) {
             Ok(socket) => {
                 self.socket = Some(socket);
                 self.handshake().expect("Could not handshake.");
@@ -64,24 +63,15 @@ impl DiscordClient {
         Ok(self.send(payload, OpCode::MESSAGE as u8)?)
     }
 
-    fn socket(&mut self) -> &mut UnixStream {
-        self.socket.as_mut().unwrap()
+    fn socket(&mut self) -> &mut PipeClient {        
+        match &mut self.socket {
+            Some(socket) => socket,
+            None => panic!("Socket is not initialized"),
+        }
     }
 
     fn fetch_process_pathbuf(&mut self) -> PathBuf {
-        let mut path = String::new();
-
-        for key in ["XDG_RUNTIME_DIR", "TMPDIR", "TMP"] {
-            match var(key) {
-                Ok(val) => {
-                    path = val;
-                    break;
-                }
-                _ => continue,
-            }
-        }
-
-        PathBuf::from(path)
+        PathBuf::from(r"\\.\pipe\")
     }
 
     fn handshake(&mut self) -> Result<(u32, Value), Box<dyn Error>> {
